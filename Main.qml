@@ -272,7 +272,12 @@ Window {
                                          "phase", ev.phase, "inverted", ev.inverted, "contentY", Math.round(grid.contentY),
                                          "target", Math.round(grid.wheelTarget), "gliding", wheelGlide.running, "t", Date.now());
                         if (dy === 0) return;
-                        const from = wheelGlide.running ? grid.wheelTarget : grid.contentY;
+                        // Notches in the same direction stack onto the glide's destination; a notch
+                        // the other way starts from where the list is now. Counting a reversal from
+                        // the old destination (still ahead) kept the list moving the wrong way.
+                        const ahead = grid.wheelTarget - grid.contentY;
+                        const sameWay = wheelGlide.running && ahead !== 0 && (ahead > 0) === (-dy > 0);
+                        const from = sameWay ? grid.wheelTarget : grid.contentY;
                         const to = Math.max(grid.minY, Math.min(grid.maxY, from - dy));
                         grid.wheelTarget = to;
                         if (touchpad || win.mf <= 0) {
