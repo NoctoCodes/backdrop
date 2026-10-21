@@ -61,6 +61,14 @@ def _shell_pid():
         return 0
 
 
+def _plugin_installed():
+    """Whether the Wallpaper Engine plugin's package is installed where Plasma looks for wallpaper
+    plugins. A screen switched to a plugin Plasma can't find just shows black."""
+    home = os.environ.get("XDG_DATA_HOME") or str(Path.home() / ".local/share")
+    dirs = [home] + (os.environ.get("XDG_DATA_DIRS") or "/usr/local/share:/usr/share").split(":")
+    return any((Path(d) / "plasma/wallpapers" / PLUGIN / "metadata.json").is_file() for d in dirs if d)
+
+
 def _load_crashers():
     try:
         return set(json.loads(CRASHERS.read_text()))
@@ -119,6 +127,7 @@ class Backend(QObject):
     overlayBusyChanged = Signal()
     _overlayReady = Signal(str, str, str)    # id, overlay dir or "", error
     compositorChanged = Signal()
+    pluginInstalledChanged = Signal()
     error = Signal(str)
 
     def __init__(self, glass_kit=True):
@@ -141,11 +150,25 @@ class Backend(QObject):
         self._glassKit = glass_kit
         self._compositor = (False, False, False, 0)
         self._checkCompositor()
+        self._pluginInstalled = _plugin_installed()
         self.refresh()
-        # pick up changes made elsewhere (the plugin's dialog, the randomizer, KWin effects)
+        # pick up changes made elsewhere (the plugin's dialog, the randomizer, KWin effects, the
+        # plugin being installed)
         self._poll = QTimer(self, interval=4000, timeout=self._refreshScreens)
         self._poll.timeout.connect(self._checkCompositor)
+        self._poll.timeout.connect(self._checkPlugin)
         self._poll.start()
+
+    def _checkPlugin(self):
+        ok = _plugin_installed()
+        if ok != self._pluginInstalled:
+            self._pluginInstalled = ok
+            self.pluginInstalledChanged.emit()
+
+    @Property(bool, notify=pluginInstalledChanged)
+    def pluginInstalled(self):
+        """The Wallpaper Engine KDE plugin is installed (else applying a wallpaper turns the screen black)."""
+        return self._pluginInstalled
 
     # ------------------------------------------------------------ what the compositor provides
     # Backdrop looks its best with the Golden Gate KWin setup (a Liquid Glass effect and the
@@ -592,14 +615,18 @@ class Backend(QObject):
     def _find(self, wid):
         return next((w for w in self._wallpapers if w["id"] == wid), None)
 
-    @Slot(str, int)
+    @Slot(str, int, result=bool)
     def apply(self, wid, desktopId):
+        """Returns whether the wallpaper was applied (else an error was emitted)."""
         w = self._find(wid)
         if not w:
-            return
+            return False
+        if not self._pluginInstalled:
+            self.error.emit("Install the Wallpaper Engine KDE plugin first")
+            return False
         if wid in self._crashers:
             self.error.emit("This wallpaper crashes Plasma's scene renderer on Linux")
-            return
+            return False
         targets = [s["id"] for s in self._screens] if desktopId < 0 else [desktopId]
         if w["type"] == "scene":
             self._armGuard(wid, targets)
@@ -608,10 +635,11 @@ class Backend(QObject):
             # Loading the plain wallpaper first and switching a moment later tore a scene down
             # mid-load, which left heavy scenes blank and could crash plasmashell's sound thread.
             self._applyUserProps(wid, targets)
-            return
+            return True
         for t in targets:
             self._write(t, {"WallpaperWorkShopId": wid, "WallpaperSource": self._source(w)}, activate=True)
         self._refreshScreens()
+        return True
 
     # ------------------------------------------------------------ crash guard
     def _armGuard(self, wid, targets):
@@ -706,6 +734,15 @@ class Backend(QObject):
     @Slot(int)
     def restoreStatic(self, desktopId):
         self._eval(f'desktopById({int(desktopId)}).wallpaperPlugin = "org.kde.image";')
+        self._refreshScreens()
+
+    @Slot()
+    def restoreAllStatic(self):
+        """Put every screen set to the plugin back on its static image (they're black while the
+        plugin isn't installed)."""
+        for s in self._screens:
+            if s["active"]:
+                self._eval(f'desktopById({int(s["id"])}).wallpaperPlugin = "org.kde.image";')
         self._refreshScreens()
 
     @Slot(str)
