@@ -29,17 +29,16 @@ Backdrop lets you browse your Wallpaper Engine library and apply wallpapers per 
 
 ## Install and run
 
-```sh
-git clone <this repo> ~/.local/share/backdrop
-~/.local/share/backdrop/backdrop            # run it
+Clone it anywhere, then run it from that folder:
 
-# optional: app menu entry and icon
-install -Dm644 ~/.local/share/backdrop/data/goldengate-backdrop.svg \
-    ~/.local/share/icons/hicolor/scalable/apps/goldengate-backdrop.svg
-sed "s|^Exec=.*|Exec=$HOME/.local/share/backdrop/backdrop|" \
-    ~/.local/share/backdrop/data/goldengate-wallpaper.desktop \
-    > ~/.local/share/applications/goldengate-wallpaper.desktop
+```sh
+git clone https://github.com/NoctoCodes/backdrop
+cd backdrop
+./backdrop          # run it
+./install.sh        # optional: add it to your app menu, with its icon
 ```
+
+`install.sh` points the menu entry at wherever you cloned the folder. If you move the folder, run it again.
 
 ## Appearance
 
@@ -82,6 +81,7 @@ Backdrop works with the stock plugin. These changes to the plugin make more of i
 | File | What it is |
 |---|---|
 | `backdrop` | the launcher |
+| `install.sh` | adds the app menu entry and icon |
 | `wallpaper.py` | the backend: library, settings, options, crash guard, compositor detection |
 | `wepkg.py` | reads Wallpaper Engine `.pkg` files and builds the option overlays |
 | `Main.qml` | the window |
