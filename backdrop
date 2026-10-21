@@ -1,0 +1,8 @@
+#!/bin/sh
+# Backdrop launcher: runs from wherever this folder lives.
+# QT_WAYLAND_SHELL_INTEGRATION is cleared so a launch from a layer-shell app (e.g. a launcher)
+# doesn't make Backdrop a borderless layer surface.
+HERE="$(cd "$(dirname "$0")" && pwd)"
+unset QT_WAYLAND_SHELL_INTEGRATION
+export QML_IMPORT_PATH="$HOME/.local/lib64/qt6/qml${QML_IMPORT_PATH:+:$QML_IMPORT_PATH}"
+exec python3 -I "$HERE/wallpaper.py" "$@"

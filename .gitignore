@@ -1,0 +1,9 @@
+# local backups made while developing
+*.pre-*
+*.workarounds
+*.square
+__pycache__/
+*.pyc
+
+# symlink to the glass kit's copy (lives in the org.goldengate.glass repo)
+GLASS_RULES.md

@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Backdrop
+GenericName=Live Wallpapers
+Comment=Browse, apply and tune Wallpaper Engine wallpapers
+Exec=goldengate-wallpaper
+Icon=goldengate-backdrop
+Categories=Settings;DesktopSettings;Qt;KDE;
+Keywords=wallpaper;engine;background;live;backdrop;
+StartupWMClass=goldengate-wallpaper
