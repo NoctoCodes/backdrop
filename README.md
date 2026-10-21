@@ -22,10 +22,10 @@ Backdrop lets you browse your Wallpaper Engine library and apply wallpapers per 
 ## Requirements
 
 - KDE Plasma 6 (Wayland or X11)
-- Python 3 with **PySide6 built against your system Qt 6**. Use your distribution's package (Fedora: `python3-pyside6`), not `pip install PySide6`, because Backdrop's UI module is a native Qt plugin and must match the Qt that loads it.
+- Python 3 with **PySide6 built against your system Qt 6**. Use your distribution's package (Fedora: `python3-pyside6`), not `pip install PySide6`, because the optional `org.goldengate.glass` module is a native Qt plugin and must match the Qt that loads it.
 - The [Wallpaper Engine KDE plugin](https://github.com/catsout/wallpaper-engine-kde-plugin) installed and set as a screen's wallpaper type
 - Wallpaper Engine owned on Steam, with its content downloaded (the plugin reads it from your Steam library)
-- **The `org.goldengate.glass` QML module**, which provides Backdrop's controls and theme. It isn't published yet, so for now Backdrop only runs where that module is installed (in `~/.local/lib64/qt6/qml`, which the launcher adds to `QML_IMPORT_PATH`).
+- Optional: the `org.goldengate.glass` QML module (not yet published). When it's installed (in `~/.local/lib64/qt6/qml`, which the launcher adds to `QML_IMPORT_PATH`), Backdrop uses its controls and theme. Without it, Backdrop runs on simple built-in stand-ins (`fallback/`) with solid panes.
 
 ## Install and run
 
@@ -82,6 +82,7 @@ Backdrop works with the stock plugin. These changes to the plugin make more of i
 |---|---|
 | `backdrop` | the launcher |
 | `install.sh` | adds the app menu entry and icon |
+| `fallback/` | built-in stand-ins used when `org.goldengate.glass` isn't installed |
 | `wallpaper.py` | the backend: library, settings, options, crash guard, compositor detection |
 | `wepkg.py` | reads Wallpaper Engine `.pkg` files and builds the option overlays |
 | `Main.qml` | the window |
@@ -95,6 +96,6 @@ Backdrop is released under the [MIT licence](LICENSE).
 
 ## Credits and licences
 
-- Uses the **org.goldengate.glass** QML module (not yet published), which keeps its own licence notices.
+- Uses the **org.goldengate.glass** QML module when it's installed (not yet published; it keeps its own licence notices). The stand-ins in `fallback/` are Backdrop's own.
 - Built for the [Wallpaper Engine KDE plugin](https://github.com/catsout/wallpaper-engine-kde-plugin) by catsout (GPL-2.0).
 - Not affiliated with Wallpaper Engine.

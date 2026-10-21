@@ -1,0 +1,10 @@
+module org.goldengate.glass
+singleton Theme 1.0 Theme.qml
+GlassShape 1.0 GlassShape.qml
+GlassSlab 1.0 GlassSlab.qml
+CornerBorder 1.0 CornerBorder.qml
+ContourGlow 1.0 ContourGlow.qml
+Glyph 1.0 Glyph.qml
+GlassSwitch 1.0 GlassSwitch.qml
+LineSlider 1.0 LineSlider.qml
+MenuItem 1.0 MenuItem.qml

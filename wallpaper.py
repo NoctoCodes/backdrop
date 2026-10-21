@@ -121,7 +121,7 @@ class Backend(QObject):
     compositorChanged = Signal()
     error = Signal(str)
 
-    def __init__(self):
+    def __init__(self, glass_kit=True):
         super().__init__()
         self._shell = QDBusInterface("org.kde.plasmashell", "/PlasmaShell", "org.kde.PlasmaShell",
                                      QDBusConnection.sessionBus())
@@ -136,6 +136,9 @@ class Backend(QObject):
         self._crashers = _load_crashers()
         self._guard = None
         self._guardTimer = QTimer(self, interval=700, timeout=self._checkGuard)
+        # False when the org.goldengate.glass module isn't installed and Backdrop runs on its
+        # built-in fallback (fallback/): no compositor glass is requested then
+        self._glassKit = glass_kit
         self._compositor = (False, False, False, 0)
         self._checkCompositor()
         self.refresh()
@@ -174,6 +177,9 @@ class Backend(QObject):
                 radius = int(float(c.get("Round-Corners", "Size", fallback="0")))
             except (ValueError, OSError):
                 radius = 0
+        if not self._glassKit:
+            # the fallback can't ask KWin for glass or blur: treat both as absent (solid panes)
+            liquid = blur = False
         force = os.environ.get("BACKDROP_COMPOSITOR", "")
         if force in ("liquid", "blur", "none"):
             liquid, blur, rounded, radius = force == "liquid", force != "none", force == "liquid", radius
@@ -181,6 +187,11 @@ class Backend(QObject):
         if state != self._compositor:
             self._compositor = state
             self.compositorChanged.emit()
+
+    @Property(bool, constant=True)
+    def glassKit(self):
+        """The org.goldengate.glass module is installed (else the built-in fallback is used)."""
+        return self._glassKit
 
     @Property(bool, constant=True)
     def debugWheel(self):
@@ -715,6 +726,22 @@ class Backend(QObject):
             self.error.emit(str(e))
 
 
+def _has_glass_kit(lib):
+    """Whether the org.goldengate.glass module (with its native GlassShape) can be loaded. Probed
+    in a throwaway engine, so a failed lookup isn't cached in the real one. BACKDROP_NO_GLASS=1
+    forces the fallback (for testing)."""
+    if os.environ.get("BACKDROP_NO_GLASS") == "1":
+        return False
+    from PySide6.QtQml import QQmlComponent, QQmlEngine
+    probe = QQmlEngine()
+    probe.addImportPath(str(lib))
+    comp = QQmlComponent(probe)
+    comp.setData(b"import QtQuick\nimport org.goldengate.glass\nItem { GlassShape {} }", QUrl())
+    ok = comp.status() == QQmlComponent.Ready
+    del comp, probe
+    return ok
+
+
 def main():
     os.environ.pop("QT_WAYLAND_SHELL_INTEGRATION", None)
     QGuiApplication.setDesktopFileName("goldengate-wallpaper")
@@ -725,7 +752,11 @@ def main():
     engine = QQmlApplicationEngine()
     lib = Path.home() / ".local/lib64/qt6/qml"
     engine.addImportPath(str(lib))
-    backend = Backend()
+    glass_kit = _has_glass_kit(lib)
+    if not glass_kit:
+        # run on the plain-QML stand-ins shipped with Backdrop
+        engine.addImportPath(str(HERE / "fallback"))
+    backend = Backend(glass_kit)
     engine.rootContext().setContextProperty("backend", backend)
     engine.load(QUrl.fromLocalFile(str(HERE / "Main.qml")))
     if not engine.rootObjects():
