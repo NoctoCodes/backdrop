@@ -303,8 +303,9 @@ Window {
                                  : modelData.id === win.currentId
                         elsewhere: backend.screens.some(s => s.active && s.workshopId === modelData.id)
                         onActivated: {
-                            backend.apply(modelData.id, win.allScreens ? -1 : win.desktopId);
-                            toast.show("Set “" + modelData.title + "”" + (win.allScreens ? " on all screens" : ""));
+                            // on failure the backend has already shown why
+                            if (backend.apply(modelData.id, win.allScreens ? -1 : win.desktopId))
+                                toast.show("Set “" + modelData.title + "”" + (win.allScreens ? " on all screens" : ""));
                         }
                         onFavorite: backend.toggleFavorite(modelData.id)
                     }
@@ -522,8 +523,9 @@ Window {
                     radius: win.rowR
                     kind: "monitor"
                     text: modelData.name
-                    detail: modelData.active ? (win.titleOf(modelData.workshopId) || "Wallpaper Engine")
-                                             : "Static image"
+                    detail: !modelData.active ? "Static image"
+                          : !backend.pluginInstalled ? "Black: plugin not installed"
+                          : (win.titleOf(modelData.workshopId) || "Wallpaper Engine")
                     selected: !win.allScreens && win.desktopId === modelData.id
                     onClicked: { win.allScreens = false; win.desktopId = modelData.id; }
                 }
@@ -580,6 +582,41 @@ Window {
                 id: col
                 width: parent.width
                 spacing: 10
+
+                // Without the plugin, applying does nothing and screens set to it stay black
+                Item {
+                    x: win.inset
+                    width: parent.width - 2 * win.inset
+                    height: visible ? missingCol.height + 20 : 0
+                    visible: !backend.pluginInstalled
+                    Rectangle { anchors.fill: parent; radius: win.rowR; color: Qt.rgba(1, 0.45, 0.35, 0.16) }
+                    Column {
+                        id: missingCol
+                        x: 10; y: 10
+                        width: parent.width - 20
+                        spacing: 8
+                        Text {
+                            width: parent.width
+                            wrapMode: Text.WordWrap
+                            text: "The Wallpaper Engine KDE plugin isn't installed, so wallpapers can't be applied"
+                                  + (backend.screens.some(s => s.active) ? " and screens set to it show black." : ".")
+                            color: Theme.fg
+                            font.family: Theme.fam; font.pixelSize: 12; font.weight: Font.DemiBold
+                        }
+                        Row {
+                            spacing: 6
+                            TextButton {
+                                text: "Use Images"
+                                visible: backend.screens.some(s => s.active)
+                                onClicked: backend.restoreAllStatic()
+                            }
+                            TextButton {
+                                text: "Get the Plugin"
+                                onClicked: Qt.openUrlExternally("https://github.com/catsout/wallpaper-engine-kde-plugin")
+                            }
+                        }
+                    }
+                }
 
                 // R8: the preview sits one inset in, so its corners are concentric with the pane
                 Item {
