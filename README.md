@@ -22,14 +22,10 @@ Backdrop lets you browse your Wallpaper Engine library and apply wallpapers per 
 ## Requirements
 
 - KDE Plasma 6 (Wayland or X11)
-- Python 3 with **PySide6 built against your system Qt 6**. Use your distribution's package (Fedora: `python3-pyside6`), not `pip install PySide6`, because the glass kit is a native Qt plugin and must match the Qt that loads it.
+- Python 3 with **PySide6 built against your system Qt 6**. Use your distribution's package (Fedora: `python3-pyside6`), not `pip install PySide6`, because Backdrop's UI module is a native Qt plugin and must match the Qt that loads it.
 - The [Wallpaper Engine KDE plugin](https://github.com/catsout/wallpaper-engine-kde-plugin) installed and set as a screen's wallpaper type
 - Wallpaper Engine owned on Steam, with its content downloaded (the plugin reads it from your Steam library)
-- **The `org.goldengate.glass` QML kit**, which provides Backdrop's controls and theme. Build and install it first:
-  ```sh
-  cmake -S goldengate-glass-qml -B build && cmake --build build && cmake --install build
-  # installs to ~/.local/lib64/qt6/qml; the launcher adds that to QML_IMPORT_PATH
-  ```
+- **The `org.goldengate.glass` QML module**, which provides Backdrop's controls and theme. It isn't published yet, so for now Backdrop only runs where that module is installed (in `~/.local/lib64/qt6/qml`, which the launcher adds to `QML_IMPORT_PATH`).
 
 ## Install and run
 
@@ -99,6 +95,6 @@ Backdrop is released under the [MIT licence](LICENSE).
 
 ## Credits and licences
 
-- Uses the **org.goldengate.glass** QML kit, which has its own repository and licence notices.
+- Uses the **org.goldengate.glass** QML module (not yet published), which keeps its own licence notices.
 - Built for the [Wallpaper Engine KDE plugin](https://github.com/catsout/wallpaper-engine-kde-plugin) by catsout (GPL-2.0).
 - Not affiliated with Wallpaper Engine.
